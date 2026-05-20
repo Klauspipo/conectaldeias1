@@ -1,0 +1,223 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "username": { "type": "string" },
+        "displayName": { "type": "string" },
+        "bio": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "followersCount": { "type": "number" },
+        "followingCount": { "type": "number" },
+        "isVerified": { "type": "boolean" },
+        "isAdmin": { "type": "boolean" },
+        "vipStatus": { 
+          "type": "object", 
+          "properties": {
+            "isVip": { "type": "boolean" },
+            "expiresAt": { "type": "string" },
+            "activeFrame": { "type": "string" },
+            "activeEffect": { "type": "string" }
+          }
+        },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["uid", "username", "createdAt", "updatedAt"]
+    },
+    "VipItem": {
+      "title": "VipItem",
+      "description": "Customization item for VIP users (frames, effects)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string", "enum": ["frame", "effect", "badge"] },
+        "name": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "type", "name", "imageUrl", "createdAt"]
+    },
+    "Story": {
+      "title": "Story",
+      "description": "Short-term media story",
+      "type": "object",
+      "properties": {
+        "storyId": { "type": "string" },
+        "authorId": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "expiresAt": { "type": "string" }
+      },
+      "required": ["storyId", "authorId", "imageUrl", "createdAt", "expiresAt"]
+    },
+    "Post": {
+      "title": "Post",
+      "description": "Instagram-style media post",
+      "type": "object",
+      "properties": {
+        "postId": { "type": "string" },
+        "authorId": { "type": "string" },
+        "caption": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "likesCount": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["postId", "authorId", "imageUrl", "createdAt"]
+    },
+    "Follow": {
+      "title": "Follow",
+      "description": "Following relationship between users",
+      "type": "object",
+      "properties": {
+        "followerId": { "type": "string" },
+        "followingId": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["followerId", "followingId", "createdAt"]
+    },
+    "Chat": {
+      "title": "Chat",
+      "description": "Real-time chat session (WhatsApp style DM or Discord style Group)",
+      "type": "object",
+      "properties": {
+        "chatId": { "type": "string" },
+        "type": { "type": "string", "enum": ["dm", "group"] },
+        "participants": { "type": "array" },
+        "lastMessage": { "type": "string" },
+        "lastSenderId": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["chatId", "type", "participants", "updatedAt"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "A single chat message",
+      "type": "object",
+      "properties": {
+        "messageId": { "type": "string" },
+        "chatId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "text": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["messageId", "chatId", "senderId", "text", "createdAt"]
+    },
+    "VillageEvent": {
+      "title": "VillageEvent",
+      "description": "An event organized by indigenous villages",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "type": { "type": "string", "enum": ["encontro", "ritual", "protesto", "assembleia"] },
+        "date": { "type": "string", "format": "date-time" },
+        "location": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorPhoto": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "description", "type", "date", "location", "authorId", "authorName", "createdAt"]
+    },
+    "VillageMessage": {
+      "title": "VillageMessage",
+      "description": "A chat message within a village channel",
+      "type": "object",
+      "properties": {
+        "channelId": { "type": "string" },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorPhoto": { "type": "string" },
+        "text": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "region": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["channelId", "authorId", "authorName", "text", "region", "createdAt"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "A product listed in the marketplace",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "category": { "type": "string" },
+        "location": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "sellerId": { "type": "string" },
+        "sellerName": { "type": "string" },
+        "sellerPhoto": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "description", "price", "category", "location", "imageUrl", "sellerId", "sellerName", "createdAt"]
+    },
+    "Report": {
+      "title": "Report",
+      "description": "A content report for moderation",
+      "type": "object",
+      "properties": {
+        "targetId": { "type": "string" },
+        "targetType": { "type": "string" },
+        "reporterId": { "type": "string" },
+        "reporterName": { "type": "string" },
+        "reason": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["targetId", "targetType", "reporterId", "reporterName", "reason", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "Public user profiles"
+    },
+    "posts/{postId}": {
+      "schema": "Post",
+      "description": "Global feed posts"
+    },
+    "stories/{storyId}": {
+      "schema": "Story",
+      "description": "User stories"
+    },
+    "vip_items/{itemId}": {
+      "schema": "VipItem",
+      "description": "Available VIP customization items"
+    },
+    "follows/{followId}": {
+      "schema": "Follow",
+      "description": "Follower/Following relationships"
+    },
+    "chats/{chatId}": {
+      "schema": "Chat",
+      "description": "Active chat sessions"
+    },
+    "chats/{chatId}/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Messages within a chat"
+    },
+    "village_events/{eventId}": {
+      "schema": "VillageEvent",
+      "description": "Indigenous village network events"
+    },
+    "village_messages/{messageId}": {
+      "schema": "VillageMessage",
+      "description": "Chat messages within indigenous village network channels"
+    },
+    "products/{productId}": {
+      "schema": "Product",
+      "description": "Marketplace products"
+    },
+    "reports/{reportId}": {
+      "schema": "Report",
+      "description": "Submitted reports for moderation"
+    }
+  }
+}

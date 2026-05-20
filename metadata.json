@@ -1,0 +1,6 @@
+{
+  "name": "CONECTALDEIAS",
+  "description": "Indígenas: um povo guerreiro e lutador",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
