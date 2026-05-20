@@ -1,29 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
-import {
-  Heart,
-  MessageCircle,
-  Send,
-  Plus,
-  Image as ImageIcon,
-  Loader2,
-  X,
-  BadgeCheck,
-  Crown,
-  Upload,
-  ArrowLeft,
-  ChevronRight,
-  MoreHorizontal,
-  Bookmark,
-  Volume2,
-  VolumeX,
-  PlayCircle,
-  Music,
-  Download,
-  RefreshCw,
-  Search,
-} from "lucide-react";
+import { Heart, MessageCircle, Send, Plus, Image as ImageIcon, Loader as Loader2, X, BadgeCheck, Crown, Upload, ArrowLeft, ChevronRight, MoveHorizontal as MoreHorizontal, Bookmark, Volume2, VolumeX, CirclePlay as PlayCircle, Music, Download, RefreshCw, Search } from "lucide-react";
 import {
   collection,
   query,
@@ -345,6 +323,7 @@ export default function Feed() {
   const [newMediaType, setNewMediaType] = useState<"image" | "video">("image");
   const [isPosting, setIsPosting] = useState(false);
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
 
   const [selectedStoryIndex, setSelectedStoryIndex] = useState(0);
   const [storyProgress, setStoryProgress] = useState(0);
@@ -692,6 +671,7 @@ export default function Feed() {
       setNewImageUrl("");
       setNewMediaType("image");
       setShowCreate(false);
+      setShowPreview(false);
     } catch (err) {
       console.error(err);
     } finally {
@@ -1176,7 +1156,7 @@ export default function Feed() {
               initial={{ scale: 0.95, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 20 }}
-              className="w-full max-w-lg rounded-3xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl"
+              className="relative w-full max-w-lg rounded-3xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl overflow-hidden"
             >
               <div className="mb-6 flex items-center justify-between">
                 <h3 className="text-xl font-bold text-white">
@@ -1187,12 +1167,128 @@ export default function Feed() {
                     setShowCreate(false);
                     setShowStoryCreate(false);
                     setIsPlayingPreview(null);
+                    setShowPreview(false);
                   }}
                   className="text-zinc-400 hover:text-white"
                 >
                   <X className="h-6 w-6" />
                 </button>
               </div>
+
+              {/* Post Preview Screen */}
+              <AnimatePresence>
+                {showPreview && newImageUrl && (
+                  <motion.div
+                    initial={{ opacity: 0, x: 40 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 40 }}
+                    className="absolute inset-0 bg-zinc-900 rounded-3xl z-10 flex flex-col overflow-hidden"
+                  >
+                    <div className="flex items-center gap-3 px-5 py-4 border-b border-zinc-800">
+                      <button
+                        type="button"
+                        onClick={() => setShowPreview(false)}
+                        className="text-zinc-400 hover:text-white transition-colors"
+                      >
+                        <ArrowLeft className="h-5 w-5" />
+                      </button>
+                      <h3 className="text-sm font-black text-white uppercase tracking-widest flex-1">Previa do Post</h3>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto">
+                      {/* Simulated post card */}
+                      <div className="bg-black border-b border-zinc-900">
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-3 py-2.5">
+                          <div className="flex items-center gap-3">
+                            <div className="h-9 w-9 rounded-full overflow-hidden p-[1px] bg-gradient-to-tr from-[#fbc02d] via-[#e91e63] to-[#9c27b0]">
+                              <div className="h-full w-full rounded-full border border-black overflow-hidden bg-zinc-900">
+                                {profile?.photoURL ? (
+                                  <img src={profile.photoURL} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+                                ) : (
+                                  <div className="flex h-full w-full items-center justify-center bg-zinc-800 text-zinc-400 text-[10px] font-bold uppercase">
+                                    {profile?.displayName?.[0]}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex flex-col">
+                              <div className="flex items-center gap-1 leading-none">
+                                <span className="text-[13px] font-bold text-white">{profile?.username}</span>
+                                {profile?.isVerified && <BadgeCheck className="h-3.5 w-3.5 text-blue-400 fill-blue-400/10 shrink-0" />}
+                                {profile?.vipStatus?.isVip && <Crown className="h-3.5 w-3.5 text-amber-500 fill-amber-500/10 shrink-0" />}
+                              </div>
+                              {selectedCreationSong && (
+                                <div className="flex items-center gap-1 text-[10.5px] text-zinc-400 font-normal mt-0.5 leading-none">
+                                  <Music className="h-2.5 w-2.5 text-urucum shrink-0 animate-spin" style={{ animationDuration: "4s" }} />
+                                  <span className="truncate max-w-[190px]">
+                                    {selectedCreationSong.artist} · {selectedCreationSong.title}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <MoreHorizontal className="h-5 w-5 text-zinc-400" />
+                        </div>
+
+                        {/* Media */}
+                        <div className="relative aspect-square w-full bg-zinc-950 flex items-center justify-center overflow-hidden">
+                          {newMediaType === "video" ? (
+                            <video src={newImageUrl} className="h-full w-full object-cover" autoPlay muted loop playsInline />
+                          ) : (
+                            <img src={newImageUrl} alt="Preview" className="h-full w-full object-cover" />
+                          )}
+                          <div className="absolute bottom-3.5 right-3.5 p-2 bg-black/60 rounded-full text-zinc-300 backdrop-blur-md border border-zinc-800/25">
+                            <VolumeX className="h-4 w-4" />
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="px-3 pt-3 pb-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-4">
+                              <Heart className="h-[26px] w-[26px] text-white" />
+                              <MessageCircle className="h-[26px] w-[26px] text-white" />
+                              <Send className="h-[25px] w-[25px] text-white" />
+                            </div>
+                            <Bookmark className="h-[25px] w-[25px] text-white" />
+                          </div>
+                          <div className="space-y-1 px-0.5">
+                            <p className="text-[13.5px] font-bold text-white tracking-tight leading-none">0 curtidas</p>
+                            {newCaption && (
+                              <div className="text-[13px] text-zinc-100 leading-snug">
+                                <span className="font-bold text-white mr-2">{profile?.username}</span>
+                                {newCaption}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="px-5 py-4 border-t border-zinc-800 flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setShowPreview(false)}
+                        className="flex-1 py-3 rounded-xl border border-zinc-700 text-zinc-300 font-black uppercase tracking-widest text-[10px] hover:bg-zinc-800 transition-all"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isPosting}
+                        onClick={async (e) => {
+                          setShowPreview(false);
+                          await handleCreatePost(e as any);
+                        }}
+                        className="flex-1 py-3 bg-urucum hover:bg-red-700 rounded-xl text-white font-black uppercase tracking-widest text-[10px] shadow-xl shadow-urucum/20 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        {isPosting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Publicar Agora"}
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               <form
                 onSubmit={
@@ -1226,8 +1322,8 @@ export default function Feed() {
                   </label>
                 </div>
 
-                {newImageUrl && (
-                  <div className="aspect-video w-full overflow-hidden rounded-xl bg-zinc-950 border border-zinc-800">
+                {newImageUrl && !showPreview && (
+                  <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-zinc-950 border border-zinc-800 group">
                     {newMediaType === "video" ? (
                       <video
                         src={newImageUrl}
@@ -1240,6 +1336,15 @@ export default function Feed() {
                         alt="Preview"
                         className="h-full w-full object-cover"
                       />
+                    )}
+                    {!showStoryCreate && (
+                      <button
+                        type="button"
+                        onClick={() => setShowPreview(true)}
+                        className="absolute bottom-3 right-3 bg-black/70 hover:bg-black/90 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full backdrop-blur-md border border-white/10 transition-all"
+                      >
+                        Ver previa
+                      </button>
                     )}
                   </div>
                 )}
