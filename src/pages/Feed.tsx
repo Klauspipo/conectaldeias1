@@ -36,6 +36,10 @@ interface Post {
   createdAt: any;
   author?: any;
   likedBy?: string[];
+  musicTitle?: string;
+  musicArtist?: string;
+  musicAudioUrl?: string;
+  postEmoji?: string;
 }
 
 interface Story {
@@ -168,12 +172,12 @@ const FeedPost: React.FC<{ post: Post; user: any; navigate: any }> = ({
               </span>
             </div>
 
-            {/* Soundtrack Indicator - EXACTLY like Instagram with the running track label */}
-            {activeMusicTitle && (
+            {/* Soundtrack Indicator - shows music linked to this post (or fallback) */}
+            {(post.musicTitle || activeMusicTitle) && (
               <div className="flex items-center gap-1 text-[10.5px] text-zinc-400 font-normal mt-0.5 leading-none">
                 <Music className="h-2.5 w-2.5 text-urucum shrink-0 animate-spin" style={{ animationDuration: "4s" }} />
                 <span className="truncate max-w-[190px] md:max-w-[280px]">
-                  {activeMusicArtist} · {activeMusicTitle}
+                  {(post.musicArtist || activeMusicArtist)} · {(post.musicTitle || activeMusicTitle)}
                 </span>
               </div>
             )}
@@ -220,6 +224,13 @@ const FeedPost: React.FC<{ post: Post; user: any; navigate: any }> = ({
             <span className="text-[10px] font-black uppercase tracking-widest">
               Imagem indisponível
             </span>
+          </div>
+        )}
+
+        {/* Emoji sticker floating over the post image */}
+        {post.postEmoji && (
+          <div className="absolute top-3.5 left-3.5 text-4xl drop-shadow-lg select-none pointer-events-none z-20 animate-bounce" style={{ animationDuration: '3s' }}>
+            {post.postEmoji}
           </div>
         )}
 
@@ -329,6 +340,18 @@ export default function Feed() {
   const [storyProgress, setStoryProgress] = useState(0);
   const [muted, setMuted] = useState(true);
 
+  // Post Emoji Sticker State
+  const [selectedPostEmoji, setSelectedPostEmoji] = useState<string>("");
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+  // Post Music State (shared selector for both posts and stories)
+  const [selectedPostSong, setSelectedPostSong] = useState<Song | null>(null);
+  const [postYtSearchTerm, setPostYtSearchTerm] = useState("");
+  const [postYtSearchResults, setPostYtSearchResults] = useState<Song[]>([]);
+  const [postYtSearching, setPostYtSearching] = useState(false);
+  const [postIsPlayingPreview, setPostIsPlayingPreview] = useState<string | null>(null);
+  const [postPreviewAudio, setPostPreviewAudio] = useState<HTMLAudioElement | null>(null);
+
   // Music & Mention Creation State
   const [selectedCreationSong, setSelectedCreationSong] = useState<Song | null>(
     null,
@@ -340,11 +363,18 @@ export default function Feed() {
   );
   const [storyAudio, setStoryAudio] = useState<HTMLAudioElement | null>(null);
 
+  const EMOJI_LIST = [
+    "🌿", "🌺", "🌻", "🦜", "🌊", "🔥", "🌙", "⭐", "🦋", "🪶",
+    "🐆", "🦁", "🐠", "🌴", "🍃", "🎶", "❤️", "💛", "💚", "💙",
+    "🙏", "🤝", "🥁", "🪘", "🌈", "✨", "🦅", "🌾", "🍀", "🐢"
+  ];
+
   // YouTube music search state
   const [ytSearchTerm, setYtSearchTerm] = useState("");
   const [ytSearchResults, setYtSearchResults] = useState<Song[]>([]);
   const [ytSearching, setYtSearching] = useState(false);
 
+  // Load songs for Stories creator
   useEffect(() => {
     if (showStoryCreate) {
       setYtSearching(true);
@@ -364,6 +394,47 @@ export default function Feed() {
       setIsPlayingPreview(null);
     }
   }, [showStoryCreate]);
+
+  // Load songs for Post creator
+  useEffect(() => {
+    if (showCreate) {
+      setPostYtSearching(true);
+      fetch('/api/youtube/search')
+        .then(res => res.json())
+        .then(data => {
+          setPostYtSearchResults(data);
+          setPostYtSearching(false);
+        })
+        .catch(err => {
+          setPostYtSearchResults(POPULAR_SONGS);
+          setPostYtSearching(false);
+        });
+    } else {
+      setPostYtSearchTerm("");
+      setPostIsPlayingPreview(null);
+      if (postPreviewAudio) { postPreviewAudio.pause(); }
+    }
+  }, [showCreate]);
+
+  const handlePostTogglePreview = (song: Song) => {
+    if (postPreviewAudio) { postPreviewAudio.pause(); setPostPreviewAudio(null); }
+    if (postIsPlayingPreview === song.id) { setPostIsPlayingPreview(null); return; }
+    setPostIsPlayingPreview(song.id);
+    if (song.audioUrl && song.audioUrl.startsWith('http')) {
+      const audio = new Audio(song.audioUrl);
+      audio.play().catch(e => console.log("Audio preview:", e));
+      setPostPreviewAudio(audio);
+    }
+  };
+
+  const handlePostYtSearch = async (queryStr: string) => {
+    setPostYtSearching(true);
+    try {
+      const res = await fetch(`/api/youtube/search?q=${encodeURIComponent(queryStr)}`);
+      if (res.ok) { const data = await res.json(); setPostYtSearchResults(data); }
+    } catch { setPostYtSearchResults(POPULAR_SONGS); }
+    finally { setPostYtSearching(false); }
+  };
 
   const handleYtSearch = async (queryStr: string) => {
     setYtSearching(true);
@@ -666,10 +737,17 @@ export default function Feed() {
         likesCount: 0,
         likedBy: [],
         createdAt: serverTimestamp(),
+        musicTitle: selectedPostSong?.title || "",
+        musicArtist: selectedPostSong?.artist || "",
+        musicAudioUrl: selectedPostSong?.audioUrl || "",
+        postEmoji: selectedPostEmoji || "",
       });
       setNewCaption("");
       setNewImageUrl("");
       setNewMediaType("image");
+      setSelectedPostSong(null);
+      setSelectedPostEmoji("");
+      setShowEmojiPicker(false);
       setShowCreate(false);
       setShowPreview(false);
     } catch (err) {
@@ -1363,17 +1441,148 @@ export default function Feed() {
                     />
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-zinc-400">
-                      Legenda
-                    </label>
-                    <textarea
-                      value={newCaption}
-                      onChange={(e) => setNewCaption(e.target.value)}
-                      placeholder="Escreva algo sobre este momento..."
-                      className="h-24 w-full resize-none rounded-xl bg-zinc-950 border border-zinc-800 px-4 py-2 text-white outline-none focus:ring-2 focus:ring-urucum/50"
-                    />
-                  </div>
+                  <>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-zinc-400">Legenda</label>
+                      <textarea
+                        value={newCaption}
+                        onChange={(e) => setNewCaption(e.target.value)}
+                        placeholder="Escreva algo sobre este momento..."
+                        className="h-24 w-full resize-none rounded-xl bg-zinc-950 border border-zinc-800 px-4 py-2 text-white outline-none focus:ring-2 focus:ring-urucum/50"
+                      />
+                    </div>
+
+                    {/* Emoji Sticker Picker */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-zinc-400 flex items-center gap-2">
+                        <span className="text-base">🎨</span>
+                        Emoji na Foto (Sticker flutuante)
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                        className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-sm text-white hover:bg-zinc-900 transition-all"
+                      >
+                        <span>{selectedPostEmoji ? `Emoji selecionado: ${selectedPostEmoji}` : "Toque para escolher um emoji..."}</span>
+                        <span className="text-2xl">{selectedPostEmoji || "😊"}</span>
+                      </button>
+                      {showEmojiPicker && (
+                        <div className="grid grid-cols-10 gap-1 p-3 rounded-xl bg-zinc-950 border border-zinc-800 max-h-32 overflow-y-auto">
+                          {EMOJI_LIST.map((emoji) => (
+                            <button
+                              key={emoji}
+                              type="button"
+                              onClick={() => { setSelectedPostEmoji(emoji === selectedPostEmoji ? "" : emoji); setShowEmojiPicker(false); }}
+                              className={`text-2xl p-1 rounded-lg hover:bg-zinc-800 transition-all ${selectedPostEmoji === emoji ? 'bg-urucum/20 ring-2 ring-urucum' : ''}`}
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      {selectedPostEmoji && (
+                        <button type="button" onClick={() => setSelectedPostEmoji("")} className="text-xs text-red-400 hover:underline font-bold">Remover emoji</button>
+                      )}
+                    </div>
+
+                    {/* Music selector for Post */}
+                    <div className="space-y-3">
+                      <label className="text-sm font-medium text-zinc-400 flex items-center gap-2">
+                        <Music className="h-4 w-4 text-urucum" />
+                        Música na Notinha (Opcional)
+                      </label>
+                      <div className="flex gap-2">
+                        <div className="relative flex-1">
+                          <input
+                            type="text"
+                            value={postYtSearchTerm}
+                            onChange={(e) => setPostYtSearchTerm(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handlePostYtSearch(postYtSearchTerm); } }}
+                            placeholder="Busque músicas, artistas..."
+                            className="w-full rounded-xl bg-zinc-950 border border-zinc-800 pl-10 pr-4 py-2 text-xs text-white outline-none focus:ring-2 focus:ring-urucum/50"
+                          />
+                          <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-zinc-500" />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handlePostYtSearch(postYtSearchTerm)}
+                          disabled={postYtSearching}
+                          className="px-4 py-2 text-xs font-black uppercase tracking-wider bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl transition-all border border-zinc-700 flex items-center gap-1.5"
+                        >
+                          {postYtSearching ? <Loader2 className="h-3 w-3 animate-spin" /> : "Buscar 🔍"}
+                        </button>
+                      </div>
+                      <div className="max-h-36 overflow-y-auto space-y-1.5 border border-zinc-800 rounded-xl p-2.5 bg-zinc-950">
+                        {postYtSearching ? (
+                          <div className="flex items-center justify-center py-4 gap-2 text-zinc-500">
+                            <Loader2 className="h-4 w-4 animate-spin text-urucum" />
+                            <span className="text-[10px]">Buscando músicas...</span>
+                          </div>
+                        ) : postYtSearchResults.length === 0 ? (
+                          <div className="text-center text-xs text-zinc-500 py-3">Nenhuma música encontrada.</div>
+                        ) : (
+                          postYtSearchResults.map((song) => {
+                            const isSelected = selectedPostSong?.id === song.id;
+                            const isPreviewing = postIsPlayingPreview === song.id;
+                            return (
+                              <div
+                                key={song.id}
+                                className={`flex items-center justify-between p-2 rounded-lg transition-all border ${
+                                  isSelected ? 'bg-urucum/10 border-urucum' : 'border-transparent bg-zinc-900/40 hover:bg-zinc-900'
+                                }`}
+                              >
+                                <div className="flex flex-col max-w-[55%]">
+                                  <span className="text-xs font-bold text-white leading-tight truncate">{song.title}</span>
+                                  <span className="text-[10px] text-zinc-500 truncate">{song.artist}</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => handlePostTogglePreview(song)}
+                                    className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-wider rounded border transition-all ${
+                                      isPreviewing ? 'bg-urucum text-white border-urucum animate-pulse' : 'bg-zinc-850 hover:bg-zinc-800 text-zinc-400 border-zinc-800 hover:text-white'
+                                    }`}
+                                  >
+                                    {isPreviewing ? "Parar" : "Ouvir"}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedPostSong(isSelected ? null : song)}
+                                    className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-wider rounded border transition-all ${
+                                      isSelected ? 'bg-emerald-600 border-emerald-500 text-white' : 'bg-zinc-850 hover:bg-zinc-800 text-zinc-400 border-zinc-800 hover:text-white'
+                                    }`}
+                                  >
+                                    {isSelected ? "✓ Usar" : "Escolher"}
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                      {selectedPostSong && (
+                        <div className="bg-zinc-950 p-3 rounded-xl border border-zinc-800 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Music className="h-4 w-4 text-emerald-500 animate-pulse" />
+                            <div>
+                              <p className="text-xs font-bold text-white">{selectedPostSong.title}</p>
+                              <p className="text-[10px] text-zinc-500">{selectedPostSong.artist}</p>
+                            </div>
+                          </div>
+                          <button type="button" onClick={() => setSelectedPostSong(null)} className="text-xs text-red-500 font-bold hover:underline">Remover</button>
+                        </div>
+                      )}
+                      {/* Hidden iframe to preview song */}
+                      {postIsPlayingPreview && !postIsPlayingPreview.startsWith('http') && (
+                        <iframe
+                          key={`post-preview-${postIsPlayingPreview}`}
+                          src={`https://www.youtube-nocookie.com/embed/${postIsPlayingPreview}?autoplay=1&controls=0`}
+                          className="w-0 h-0 absolute opacity-0 pointer-events-none"
+                          allow="autoplay; encrypted-media"
+                        />
+                      )}
+                    </div>
+                  </>
                 )}
 
                 {/* Unified YouTube soundtrack selector block for both stories and posts */}
