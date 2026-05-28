@@ -2,7 +2,7 @@
 @import "tailwindcss";
 
 @theme {
-  --color-urucum: #2563EB;
+  --color-urucum: #D23C1E;
   --color-jenipapo: #090B11;
   --color-ochre: #B8860B;
   --color-forest: #10B981;
@@ -119,7 +119,7 @@
   body {
     @apply bg-jenipapo text-zinc-300 antialiased;
     background-image: 
-      radial-gradient(circle at 50% 0%, rgba(37, 99, 235, 0.06) 0%, transparent 50%),
+      radial-gradient(circle at 50% 0%, rgba(210, 60, 30, 0.06) 0%, transparent 50%),
       radial-gradient(circle at 0% 100%, rgba(16, 185, 129, 0.04) 0%, transparent 50%);
   }
 }
@@ -127,10 +127,10 @@
 @layer utilities {
   .bg-indigenous-pattern {
     @apply bg-zinc-950;
-    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 30-30 30-30-30L30 0zm0 10l20 20-20 20-20-20 20-20z' fill='%232563EB' fill-opacity='0.03' fill-rule='evenodd'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l30 30-30 30-30-30L30 0zm0 10l20 20-20 20-20-20 20-20z' fill='%23D23C1E' fill-opacity='0.03' fill-rule='evenodd'/%3E%3C/svg%3E");
   }
 
-  .border-urucum { border-color: #2563EB; }
-  .text-urucum { color: #2563EB; }
-  .bg-urucum { background-color: #2563EB; }
+  .border-urucum { border-color: #D23C1E; }
+  .text-urucum { color: #D23C1E; }
+  .bg-urucum { background-color: #D23C1E; }
 }
